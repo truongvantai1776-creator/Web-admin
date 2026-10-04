@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trang Quản Lý Dữ Liệu Key</title>
+    <title>Admin Panel - Key Logs</title>
     <style>
         body {
             background-color: #0f0f0f;
@@ -19,7 +19,7 @@
             background: #181818;
             padding: 30px;
             border-radius: 12px;
-            width: 400px;
+            width: 450px;
             box-shadow: 0 8px 24px rgba(0,0,0,0.6);
             border: 1px solid #2a2a2a;
         }
@@ -29,16 +29,17 @@
             background: #121212;
             padding: 12px;
             border-radius: 6px;
-            max-height: 250px;
+            max-height: 280px;
             overflow-y: auto;
             border: 1px solid #222;
             color: #00ffcc;
             font-family: monospace;
-            font-size: 14px;
+            font-size: 11px;
         }
         .history-list div {
-            padding: 6px 0;
+            padding: 8px 0;
             border-bottom: 1px solid #1a1a1a;
+            word-break: break-all;
         }
         .clear-btn {
             width: 100%;
@@ -58,11 +59,11 @@
 
     <div class="container">
         <h2>Admin Panel</h2>
-        <p>Danh sách toàn bộ các Key đã được hệ thống tạo ra</p>
+        <p>Lịch sử các chuỗi Key phức tạp đã cấp</p>
         
         <div class="history-list" id="adminHistoryList">Đang tải dữ liệu...</div>
         
-        <button class="clear-btn" onclick="clearHistory()">XÓA TẤT CẢ DỮ LIỆU KEY</button>
+        <button class="clear-btn" onclick="clearHistory()">XÓA SẠCH LỊCH SỬ</button>
     </div>
 
     <script>
@@ -70,10 +71,11 @@
             let keyHistory = JSON.parse(localStorage.getItem("system_key_history") || "[]");
             let html = "";
             if (keyHistory.length === 0) {
-                html = "Chưa có key nào được tạo.";
+                html = "Chưa có bản ghi nào.";
             } else {
-                // Đảo ngược để key mới tạo hiển thị lên trên cùng
-                html = keyHistory.reverse().map((k, index) => `<div>${index + 1}. ${k}</div>`).join('');
+                html = keyHistory.reverse().map((item, index) => 
+                    `<div><b>[${item.time}]</b><br>${item.key}</div>`
+                ).join('');
             }
             document.getElementById("adminHistoryList").innerHTML = html;
         }
@@ -81,10 +83,11 @@
         loadAdminData();
 
         function clearHistory() {
-            if(confirm("Bạn có chắc chắn muốn xóa sạch dữ liệu key không?")) {
+            if(confirm("Xóa sạch toàn bộ lịch sử key?")) {
                 localStorage.removeItem("system_key_history");
+                localStorage.removeItem("system_secure_session");
                 loadAdminData();
-                alert("Đã xóa sạch dữ liệu!");
+                alert("Đã dọn sạch sẽ!");
             }
         }
     </script>
