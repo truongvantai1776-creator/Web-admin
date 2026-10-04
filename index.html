@@ -118,7 +118,8 @@
             let now = Math.floor(Date.now() / 1000); // Thời gian hiện tại dạng giây (khớp với os.time())
 
             try {
-                let response = await fetch(NPOINT_API_URL);
+                // Thêm { cache: "no-store" } để tránh trình duyệt lưu cache cũ, đảm bảo lấy dữ liệu mới nhất từ npoint
+                let response = await fetch(NPOINT_API_URL, { cache: "no-store" });
                 let data = await response.json();
                 let keyHistory = data.keys || [];
 
@@ -132,7 +133,7 @@
                 let activeCount = 0;
                 let html = "";
 
-                // Đảo ngược để hiển thị key mới nhất lên đầu
+                // Đảo ngược để hiển thị key mới nhất lên đầu danh sách
                 keyHistory.slice().reverse().forEach((item, index) => {
                     let expireTime = Number(item.expireTimestamp);
                     let timeLeft = expireTime - now;
@@ -169,7 +170,7 @@
             }
         }
 
-        // Tự động làm mới dữ liệu mỗi 2 giây để cập nhật thời gian thực
+        // Tự động làm mới dữ liệu mỗi 2 giây để cập nhật thời gian thực từ người dùng khác gửi lên
         setInterval(loadAdminData, 2000);
         loadAdminData();
     </script>
