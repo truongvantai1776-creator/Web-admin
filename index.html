@@ -92,13 +92,13 @@
             <img src="logo.png" alt="T-HUB Logo" class="logo-img" onerror="this.src='https://i.imgur.com/6X93ZgV.png'">
             <div>
                 <h2>T-HUB Admin Panel</h2>
-                <div class="subtitle">Giám sát hệ thống Key và thời gian thực</div>
+                <div class="subtitle">Giám sát hệ thống Key trực tuyến (Cloud)</div>
             </div>
         </div>
         
         <div class="stats-box">
             <div class="stat-card">
-                Tổng Key đã cấp
+                Tổng Key trên Cloud
                 <span id="totalKeys">0</span>
             </div>
             <div class="stat-card">
@@ -107,56 +107,70 @@
             </div>
         </div>
 
-        <div class="history-list" id="adminHistoryList">Đang tải dữ liệu hệ thống...</div>
+        <div class="history-list" id="adminHistoryList">Đang tải dữ liệu từ Cloud...</div>
     </div>
 
     <script>
-        function loadAdminData() {
-            let keyHistory = JSON.parse(localStorage.getItem("system_key_history") || "[]");
+        const NPOINT_API_URL = "https://api.npoint.io/df2d5d0fda1ea4e5a0fa";
+
+        async function loadAdminData() {
             let listContainer = document.getElementById("adminHistoryList");
-            let now = new Date().getTime();
+            let now = Math.floor(Date.now() / 1000); // Thời gian hiện tại dạng giây (khớp với os.time())
 
-            if (keyHistory.length === 0) {
-                listContainer.innerHTML = "<div style='text-align:center; color:#64748b; padding: 20px;'>Chưa có bản ghi nào trên hệ thống.</div>";
-                document.getElementById("totalKeys").innerText = "0";
-                document.getElementById("activeKeys").innerText = "0";
-                return;
-            }
+            try {
+                let response = await fetch(NPOINT_API_URL);
+                let data = await response.json();
+                let keyHistory = data.keys || [];
 
-            let activeCount = 0;
-            let html = "";
-
-            keyHistory.slice().reverse().forEach((item, index) => {
-                let timeLeft = item.expireTimestamp - now;
-                let isExpired = timeLeft <= 0;
-                
-                if (!isExpired) activeCount++;
-
-                let timeStr = "";
-                if (isExpired) {
-                    timeStr = "<span class='badge badge-expired'>[Đã hết hạn]</span>";
-                } else {
-                    let hours = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                    let minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
-                    let seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
-                    timeStr = `<span class='badge badge-active'>Còn lại: ${hours}h ${minutes}m ${seconds}s</span>`;
+                if (keyHistory.length === 0) {
+                    listContainer.innerHTML = "<div style='text-align:center; color:#64748b; padding: 20px;'>Chưa có bản ghi nào trên hệ thống.</div>";
+                    document.getElementById("totalKeys").innerText = "0";
+                    document.getElementById("activeKeys").innerText = "0";
+                    return;
                 }
 
-                html += `
-                    <div class="key-item ${isExpired ? 'expired' : ''}">
-                        <div><b>#${keyHistory.length - index}</b> | ${timeStr}</div>
-                        <div class="key-string">🔑 ${item.key}</div>
-                        <div style="font-size:10px; color:#94a3b8;">⏱ Tạo: ${item.createdTime} | HWID: ${item.hwid || 'Chưa kích hoạt'}</div>
-                    </div>
-                `;
-            });
+                let activeCount = 0;
+                let html = "";
 
-            listContainer.innerHTML = html;
-            document.getElementById("totalKeys").innerText = keyHistory.length;
-            document.getElementById("activeKeys").innerText = activeCount;
+                // Đảo ngược để hiển thị key mới nhất lên đầu
+                keyHistory.slice().reverse().forEach((item, index) => {
+                    let expireTime = Number(item.expireTimestamp);
+                    let timeLeft = expireTime - now;
+                    let isExpired = timeLeft <= 0;
+                    
+                    if (!isExpired) activeCount++;
+
+                    let timeStr = "";
+                    if (isExpired) {
+                        timeStr = "<span class='badge badge-expired'>[Đã hết hạn]</span>";
+                    } else {
+                        let hours = Math.floor(timeLeft / 3600);
+                        let minutes = Math.floor((timeLeft % 3600) / 60);
+                        let seconds = timeLeft % 60;
+                        timeStr = `<span class='badge badge-active'>Còn lại: ${hours}h ${minutes}m ${seconds}s</span>`;
+                    }
+
+                    html += `
+                        <div class="key-item ${isExpired ? 'expired' : ''}">
+                            <div><b>#${keyHistory.length - index}</b> | ${timeStr}</div>
+                            <div class="key-string">🔑 ${item.key}</div>
+                            <div style="font-size:10px; color:#94a3b8;">HWID: ${item.hwid || 'Chưa kích hoạt'}</div>
+                        </div>
+                    `;
+                });
+
+                listContainer.innerHTML = html;
+                document.getElementById("totalKeys").innerText = keyHistory.length;
+                document.getElementById("activeKeys").innerText = activeCount;
+
+            } catch (err) {
+                listContainer.innerHTML = "<div style='text-align:center; color:#ef4444; padding: 20px;'>Lỗi kết nối tới Cloud API!</div>";
+                console.error(err);
+            }
         }
 
-        setInterval(loadAdminData, 1000);
+        // Tự động làm mới dữ liệu mỗi 2 giây để cập nhật thời gian thực
+        setInterval(loadAdminData, 2000);
         loadAdminData();
     </script>
 </body>
