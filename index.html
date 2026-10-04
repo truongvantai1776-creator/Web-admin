@@ -3,106 +3,162 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Panel - Key Logs</title>
+    <title>T-HUB | Admin Panel</title>
     <style>
         body {
-            background-color: #0f0f0f;
+            background-color: #060913;
+            background-image: radial-gradient(circle at center, #0f172a 0%, #060913 100%);
             color: #ffffff;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            min-height: 100vh;
             margin: 0;
         }
         .container {
-            background: #181818;
+            background: rgba(17, 24, 39, 0.85);
+            backdrop-filter: blur(12px);
             padding: 30px;
-            border-radius: 12px;
+            border-radius: 20px;
             width: 480px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.6);
-            border: 1px solid #2a2a2a;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.8), 0 0 20px rgba(56, 189, 248, 0.15);
+            border: 1px solid rgba(56, 189, 248, 0.2);
         }
-        h2 { color: #ff5555; margin-bottom: 10px; font-size: 22px; text-align: center; }
-        p { color: #aaa; font-size: 13px; margin-bottom: 15px; text-align: center; }
-        .history-list {
-            background: #121212;
+        .header-box {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .logo-img {
+            width: 55px;
+            height: 55px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #38bdf8;
+            box-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
+        }
+        h2 { color: #38bdf8; margin: 0; font-size: 20px; text-shadow: 0 0 10px rgba(56, 189, 248, 0.4); }
+        .subtitle { color: #94a3b8; font-size: 12px; }
+        
+        .stats-box {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            flex: 1;
+            background: #0b0f19;
             padding: 12px;
-            border-radius: 6px;
+            border-radius: 10px;
+            text-align: center;
+            border: 1px solid #1e293b;
+        }
+        .stat-card span { display: block; font-size: 18px; font-weight: bold; color: #38bdf8; margin-top: 4px; }
+
+        .history-list {
+            background: #0b0f19;
+            padding: 12px;
+            border-radius: 10px;
             max-height: 320px;
             overflow-y: auto;
-            border: 1px solid #222;
-            color: #00ffcc;
+            border: 1px solid #1e293b;
             font-family: monospace;
             font-size: 11px;
         }
-        .history-list div {
-            padding: 8px 0;
-            border-bottom: 1px solid #1a1a1a;
-            word-break: break-all;
-        }
-        .status-active { color: #00ffcc; }
-        .status-expired { color: #ff5555; }
-        .clear-btn {
-            width: 100%;
-            margin-top: 15px;
+        .key-item {
+            background: #111827;
             padding: 10px;
-            background: #ff5555;
-            border: none;
-            color: #fff;
-            font-weight: bold;
-            border-radius: 6px;
-            cursor: pointer;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border-left: 4px solid #38bdf8;
+            border: 1px solid #1e293b;
         }
-        .clear-btn:hover { background: #e04343; }
+        .key-item.expired {
+            border-left-color: #ef4444;
+            opacity: 0.65;
+        }
+        .key-string { color: #7dd3fc; word-break: break-all; margin: 4px 0; }
+        .badge { font-weight: bold; }
+        .badge-active { color: #10b981; }
+        .badge-expired { color: #ef4444; }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <h2>Admin Panel</h2>
-        <p>Quản lý Key, thời gian tạo và trạng thái hiệu lực</p>
+        <div class="header-box">
+            <img src="logo.png" alt="T-HUB Logo" class="logo-img" onerror="this.src='https://i.imgur.com/6X93ZgV.png'">
+            <div>
+                <h2>T-HUB Admin Panel</h2>
+                <div class="subtitle">Giám sát hệ thống Key và thời gian thực</div>
+            </div>
+        </div>
         
-        <div class="history-list" id="adminHistoryList">Đang tải dữ liệu...</div>
-        
-        <button class="clear-btn" onclick="clearHistory()">XÓA SẠCH LỊCH SỬ</button>
+        <div class="stats-box">
+            <div class="stat-card">
+                Tổng Key đã cấp
+                <span id="totalKeys">0</span>
+            </div>
+            <div class="stat-card">
+                Đang hoạt động
+                <span id="activeKeys" style="color: #10b981;">0</span>
+            </div>
+        </div>
+
+        <div class="history-list" id="adminHistoryList">Đang kết nối cơ sở dữ liệu...</div>
     </div>
 
     <script>
         function loadAdminData() {
             let keyHistory = JSON.parse(localStorage.getItem("system_key_history") || "[]");
-            let html = "";
+            let listContainer = document.getElementById("adminHistoryList");
             let now = new Date().getTime();
 
             if (keyHistory.length === 0) {
-                html = "Chưa có bản ghi nào.";
-            } else {
-                html = keyHistory.reverse().map((item, index) => {
-                    let isExpired = now > item.expireTimestamp;
-                    let statusText = isExpired ? 
-                        "<span class='status-expired'>[Đã hết hạn]</span>" : 
-                        "<span class='status-active'>[Còn hiệu lực]</span>";
-                    
-                    return `<div>
-                        <b>#${keyHistory.length - index} - ${statusText}</b><br>
-                        ⏱ Tạo lúc: ${item.createdTime}<br>
-                        🔑 <code>${item.key}</code>
-                    </div>`;
-                }).join('');
+                listContainer.innerHTML = "<div style='text-align:center; color:#64748b; padding: 20px;'>Chưa có bản ghi nào trên hệ thống.</div>";
+                document.getElementById("totalKeys").innerText = "0";
+                document.getElementById("activeKeys").innerText = "0";
+                return;
             }
-            document.getElementById("adminHistoryList").innerHTML = html;
+
+            let activeCount = 0;
+            let html = "";
+
+            keyHistory.slice().reverse().forEach((item, index) => {
+                let timeLeft = item.expireTimestamp - now;
+                let isExpired = timeLeft <= 0;
+                
+                if (!isExpired) activeCount++;
+
+                let timeStr = "";
+                if (isExpired) {
+                    timeStr = "<span class='badge badge-expired'>[Đã hết hạn]</span>";
+                } else {
+                    let hours = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    let minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+                    let seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+                    timeStr = `<span class='badge badge-active'>Còn lại: ${hours}h ${minutes}m ${seconds}s</span>`;
+                }
+
+                html += `
+                    <div class="key-item ${isExpired ? 'expired' : ''}">
+                        <div><b>#${keyHistory.length - index}</b> | ${timeStr}</div>
+                        <div class="key-string">🔑 ${item.key}</div>
+                        <div style="font-size:10px; color:#94a3b8;">⏱ Tạo: ${item.createdTime}</div>
+                    </div>
+                `;
+            });
+
+            listContainer.innerHTML = html;
+            document.getElementById("totalKeys").innerText = keyHistory.length;
+            document.getElementById("activeKeys").innerText = activeCount;
         }
 
+        // Tự động cập nhật đồng hồ đếm ngược từng giây không cần F5
+        setInterval(loadAdminData, 1000);
         loadAdminData();
-
-        function clearHistory() {
-            if(confirm("Xóa sạch toàn bộ lịch sử key?")) {
-                localStorage.removeItem("system_key_history");
-                localStorage.removeItem("system_secure_session");
-                loadAdminData();
-                alert("Đã dọn sạch sẽ!");
-            }
-        }
     </script>
 
 </body>
