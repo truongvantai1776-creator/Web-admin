@@ -107,7 +107,7 @@
             </div>
         </div>
 
-        <div class="history-list" id="adminHistoryList">Đang kết nối cơ sở dữ liệu...</div>
+        <div class="history-list" id="adminHistoryList">Đang tải dữ liệu hệ thống...</div>
     </div>
 
     <script>
@@ -146,7 +146,7 @@
                     <div class="key-item ${isExpired ? 'expired' : ''}">
                         <div><b>#${keyHistory.length - index}</b> | ${timeStr}</div>
                         <div class="key-string">🔑 ${item.key}</div>
-                        <div style="font-size:10px; color:#94a3b8;">⏱ Tạo: ${item.createdTime}</div>
+                        <div style="font-size:10px; color:#94a3b8;">⏱ Tạo: ${item.createdTime} | HWID: ${item.hwid || 'Chưa kích hoạt'}</div>
                     </div>
                 `;
             });
@@ -156,10 +156,8 @@
             document.getElementById("activeKeys").innerText = activeCount;
         }
 
-        // Tự động cập nhật đồng hồ đếm ngược từng giây không cần F5
         setInterval(loadAdminData, 1000);
         loadAdminData();
     </script>
-
 </body>
 </html>
