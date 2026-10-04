@@ -19,7 +19,7 @@
             background: #181818;
             padding: 30px;
             border-radius: 12px;
-            width: 450px;
+            width: 480px;
             box-shadow: 0 8px 24px rgba(0,0,0,0.6);
             border: 1px solid #2a2a2a;
         }
@@ -29,7 +29,7 @@
             background: #121212;
             padding: 12px;
             border-radius: 6px;
-            max-height: 280px;
+            max-height: 320px;
             overflow-y: auto;
             border: 1px solid #222;
             color: #00ffcc;
@@ -41,6 +41,8 @@
             border-bottom: 1px solid #1a1a1a;
             word-break: break-all;
         }
+        .status-active { color: #00ffcc; }
+        .status-expired { color: #ff5555; }
         .clear-btn {
             width: 100%;
             margin-top: 15px;
@@ -59,7 +61,7 @@
 
     <div class="container">
         <h2>Admin Panel</h2>
-        <p>Lịch sử các chuỗi Key phức tạp đã cấp</p>
+        <p>Quản lý Key, thời gian tạo và trạng thái hiệu lực</p>
         
         <div class="history-list" id="adminHistoryList">Đang tải dữ liệu...</div>
         
@@ -70,12 +72,23 @@
         function loadAdminData() {
             let keyHistory = JSON.parse(localStorage.getItem("system_key_history") || "[]");
             let html = "";
+            let now = new Date().getTime();
+
             if (keyHistory.length === 0) {
                 html = "Chưa có bản ghi nào.";
             } else {
-                html = keyHistory.reverse().map((item, index) => 
-                    `<div><b>[${item.time}]</b><br>${item.key}</div>`
-                ).join('');
+                html = keyHistory.reverse().map((item, index) => {
+                    let isExpired = now > item.expireTimestamp;
+                    let statusText = isExpired ? 
+                        "<span class='status-expired'>[Đã hết hạn]</span>" : 
+                        "<span class='status-active'>[Còn hiệu lực]</span>";
+                    
+                    return `<div>
+                        <b>#${keyHistory.length - index} - ${statusText}</b><br>
+                        ⏱ Tạo lúc: ${item.createdTime}<br>
+                        🔑 <code>${item.key}</code>
+                    </div>`;
+                }).join('');
             }
             document.getElementById("adminHistoryList").innerHTML = html;
         }
