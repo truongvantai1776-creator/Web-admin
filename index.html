@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trang Quản Lý Dữ Liệu Key</title>
+    <style>
+        body {
+            background-color: #0f0f0f;
+            color: #ffffff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background: #181818;
+            padding: 30px;
+            border-radius: 12px;
+            width: 400px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+            border: 1px solid #2a2a2a;
+        }
+        h2 { color: #ff5555; margin-bottom: 10px; font-size: 22px; text-align: center; }
+        p { color: #aaa; font-size: 13px; margin-bottom: 15px; text-align: center; }
+        .history-list {
+            background: #121212;
+            padding: 12px;
+            border-radius: 6px;
+            max-height: 250px;
+            overflow-y: auto;
+            border: 1px solid #222;
+            color: #00ffcc;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        .history-list div {
+            padding: 6px 0;
+            border-bottom: 1px solid #1a1a1a;
+        }
+        .clear-btn {
+            width: 100%;
+            margin-top: 15px;
+            padding: 10px;
+            background: #ff5555;
+            border: none;
+            color: #fff;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        .clear-btn:hover { background: #e04343; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>Admin Panel</h2>
+        <p>Danh sách toàn bộ các Key đã được hệ thống tạo ra</p>
+        
+        <div class="history-list" id="adminHistoryList">Đang tải dữ liệu...</div>
+        
+        <button class="clear-btn" onclick="clearHistory()">XÓA TẤT CẢ DỮ LIỆU KEY</button>
+    </div>
+
+    <script>
+        function loadAdminData() {
+            let keyHistory = JSON.parse(localStorage.getItem("system_key_history") || "[]");
+            let html = "";
+            if (keyHistory.length === 0) {
+                html = "Chưa có key nào được tạo.";
+            } else {
+                // Đảo ngược để key mới tạo hiển thị lên trên cùng
+                html = keyHistory.reverse().map((k, index) => `<div>${index + 1}. ${k}</div>`).join('');
+            }
+            document.getElementById("adminHistoryList").innerHTML = html;
+        }
+
+        loadAdminData();
+
+        function clearHistory() {
+            if(confirm("Bạn có chắc chắn muốn xóa sạch dữ liệu key không?")) {
+                localStorage.removeItem("system_key_history");
+                loadAdminData();
+                alert("Đã xóa sạch dữ liệu!");
+            }
+        }
+    </script>
+
+</body>
+</html>
