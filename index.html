@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>T-HUB | Admin Panel</title>
+    <title>T-HUB | Admin Panel nPoint</title>
     <style>
         body {
             background-color: #060913;
@@ -19,7 +19,7 @@
             background: rgba(17, 24, 39, 0.85);
             padding: 25px;
             border-radius: 20px;
-            width: 480px;
+            width: 500px;
             border: 1px solid rgba(56, 189, 248, 0.2);
             box-shadow: 0 10px 30px rgba(0,0,0,0.8);
         }
@@ -47,108 +47,104 @@
             border: none;
             cursor: pointer;
         }
-        select {
-            background: #1e293b;
-            color: #38bdf8;
-            border: 1px solid #334155;
-        }
+        select { background: #1e293b; color: #38bdf8; border: 1px solid #334155; }
         .btn-add { background: #10b981; color: white; }
-        .btn-sub { background: #ef4444; color: white; }
-        .btn-add:hover { background: #059669; }
-        .btn-sub:hover { background: #dc2626; }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <h2>T-HUB Admin Panel (Quản lý thiết bị)</h2>
-        <div id="adminList">Đang tải danh sách thiết bị...</div>
+        <h2>T-HUB Admin Panel (nPoint)</h2>
+        <div id="adminList">Đang tải dữ liệu từ nPoint...</div>
     </div>
 
     <script>
-        const channel = new BroadcastChannel('thub_sync_channel');
+        // Link nPoint của bạn
+        const NPOINT_URL = "https://api.npoint.io/1e1e56ce8cfde33529d9";
 
-        function loadAdmin() {
+        async function loadAdminData() {
             let container = document.getElementById("adminList");
-            let usersData = JSON.parse(localStorage.getItem("thub_users_db") || "{}");
-            let keys = Object.keys(usersData);
+            try {
+                let res = await fetch(NPOINT_URL, { cache: "no-store" });
+                let data = await res.json();
+                
+                let users = [];
+                if (data && Array.isArray(data.users)) users = data.users;
 
-            if (keys.length === 0) {
-                container.innerHTML = "<div style='text-align:center; color:#64748b; padding:20px;'>Chưa có thiết bị nào kết nối.</div>";
-                return;
-            }
-
-            let html = "";
-            let now = Date.now();
-
-            keys.forEach(hwid => {
-                let user = usersData[hwid];
-                let timeLeft = user.expire - now;
-                let isExpired = timeLeft <= 0;
-
-                let timeStr = "";
-                if (isExpired) {
-                    timeStr = "<span style='color:#ef4444'>0 Giờ (Chưa kích hoạt)</span>";
-                } else {
-                    let h = Math.floor(timeLeft / (1000 * 60 * 60));
-                    let m = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
-                    let s = Math.floor((timeLeft % (1000 * 60)) / 1000);
-                    timeStr = `<span style='color:#10b981'>Còn lại: ${h}h ${m}m ${s}s</span>`;
+                if (users.length === 0) {
+                    container.innerHTML = "<div style='text-align:center; color:#64748b; padding:20px;'>Chưa có thiết bị nào kết nối.</div>";
+                    return;
                 }
 
-                html += `
-                    <div class="device-item">
-                        <div><b>HWID:</b> ${hwid}</div>
-                        <div><b>Trạng thái:</b> ${timeStr}</div>
-                        <div class="action-box">
-                            <select id="select_${hwid}">
-                                <option value="1">+1 Giờ</option>
-                                <option value="2">+2 Giờ</option>
-                                <option value="5">+5 Giờ</option>
-                                <option value="12">+12 Giờ</option>
-                                <option value="24" selected>+24 Giờ</option>
-                                <option value="48">+48 Giờ</option>
-                                <option value="-1">-1 Giờ</option>
-                                <option value="-24">-24 Giờ</option>
-                            </select>
-                            <button class="btn-add" onclick="applyTime('${hwid}')">Xác nhận</button>
-                        </div>
-                    </div>
-                `;
-            });
-
-            container.innerHTML = html;
-        }
-
-        function applyTime(hwid) {
-            let selectEl = document.getElementById(`select_${hwid}`);
-            let hours = parseInt(selectEl.value);
-
-            let usersData = JSON.parse(localStorage.getItem("thub_users_db") || "{}");
-            if (usersData[hwid]) {
+                let html = "";
                 let now = Date.now();
-                let base = usersData[hwid].expire > now ? usersData[hwid].expire : now;
-                
-                usersData[hwid].expire = base + (hours * 60 * 60 * 1000);
-                if (usersData[hwid].expire < now) usersData[hwid].expire = now;
 
-                localStorage.setItem("thub_users_db", JSON.stringify(usersData));
-                
-                // Gửi tín hiệu đồng bộ ngay lập tức sang trang người dùng
-                channel.postMessage({ type: 'UPDATE_USERS', hwid: hwid });
-                loadAdmin();
+                users.forEach((user, index) => {
+                    let timeLeft = user.expireTimestamp - now;
+                    let isExpired = user.expireTimestamp === 0 || timeLeft <= 0;
+
+                    let timeStr = isExpired 
+                        ? "<span style='color:#ef4444'>0 Giờ (Chưa kích hoạt)</span>" 
+                        : `<span style='color:#10b981'>Còn lại: ${Math.floor(timeLeft / 3600000)}h ${Math.floor((timeLeft % 3600000) / 60000)}m ${Math.floor((timeLeft % 60000) / 1000)}s</span>`;
+
+                    html += `
+                        <div class="device-item">
+                            <div><b>HWID:</b> ${user.hwid}</div>
+                            <div><b>Trạng thái:</b> ${timeStr}</div>
+                            <div class="action-box">
+                                <select id="select_${index}">
+                                    <option value="1">+1 Giờ</option>
+                                    <option value="2">+2 Giờ</option>
+                                    <option value="5">+5 Giờ</option>
+                                    <option value="12">+12 Giờ</option>
+                                    <option value="24" selected>+24 Giờ</option>
+                                    <option value="48">+48 Giờ</option>
+                                    <option value="-1">-1 Giờ</option>
+                                    <option value="-24">-24 Giờ</option>
+                                </select>
+                                <button class="btn-add" onclick="modifyUserTime(${index})">Xác nhận</button>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                container.innerHTML = html;
+            } catch (err) {
+                container.innerHTML = "<div style='text-align:center; color:#ef4444;'>Lỗi kết nối tới nPoint API!</div>";
             }
         }
 
-        // Tự động làm mới bảng Admin mỗi giây để số giây đếm lùi trực tiếp trên giao diện Admin luôn
-        channel.onmessage = function (event) {
-            if (event.data && event.data.type === 'UPDATE_USERS') {
-                loadAdmin();
-            }
-        };
+        async function modifyUserTime(index) {
+            let hours = parseInt(document.getElementById(`select_${index}`).value);
+            try {
+                let res = await fetch(NPOINT_URL, { cache: "no-store" });
+                let data = await res.json();
+                let users = data.users;
 
-        setInterval(loadAdmin, 1000);
-        loadAdmin();
+                let now = Date.now();
+                let currentExpire = Number(users[index].expireTimestamp || 0);
+                let baseTime = currentExpire > now ? currentExpire : now;
+
+                let newExpire = baseTime + (hours * 60 * 60 * 1000);
+                if (newExpire < now) newExpire = now;
+
+                users[index].expireTimestamp = newExpire;
+
+                await fetch(NPOINT_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(data)
+                });
+
+                alert("Cập nhật thời gian thành công!");
+                loadAdminData();
+            } catch (err) {
+                alert("Lỗi khi lưu dữ liệu lên nPoint!");
+            }
+        }
+
+        setInterval(loadAdminData, 2000);
+        loadAdminData();
     </script>
 </body>
 </html>
