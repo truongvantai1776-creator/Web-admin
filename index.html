@@ -3,32 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>T-HUB | Admin Panel</title>
+    <title>T-HUB | Admin Dashboard</title>
     <style>
         body { background: #060913; color: #fff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; }
-        .container { max-width: 800px; margin: 0 auto; background: rgba(17, 24, 39, 0.9); padding: 20px; border-radius: 12px; border: 1px solid #38bdf8; }
+        .container { max-width: 900px; margin: 0 auto; background: rgba(17, 24, 39, 0.95); padding: 25px; border-radius: 12px; border: 1px solid #38bdf8; }
         h2 { color: #38bdf8; text-align: center; }
-        .form-group { margin-bottom: 15px; }
-        input, button { padding: 10px; border-radius: 6px; border: 1px solid #38bdf8; background: #0b1329; color: #fff; font-size: 14px; }
-        button { background: #38bdf8; color: #060913; font-weight: bold; cursor: pointer; }
+        .form-box { background: #0b1329; padding: 15px; border-radius: 8px; border: 1px dashed #38bdf8; margin-bottom: 20px; }
+        .form-group { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+        input { padding: 10px; border-radius: 6px; border: 1px solid #38bdf8; background: #060913; color: #fff; flex: 1; min-width: 150px; }
+        button { padding: 10px 15px; border-radius: 6px; border: none; background: #38bdf8; color: #060913; font-weight: bold; cursor: pointer; }
         button:hover { background: #0ea5e9; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #1e293b; padding: 10px; text-align: left; font-size: 13px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { border: 1px solid #1e293b; padding: 12px; text-align: left; font-size: 13px; }
         th { background: #0b1329; color: #38bdf8; }
-        .actions button { padding: 5px 8px; font-size: 12px; margin-right: 5px; }
-        .danger { background: #ef4444 !important; border-color: #ef4444 !important; color: #fff !important; }
+        .badge-unused { color: #10b981; font-weight: bold; }
+        .badge-expired { color: #ef4444; font-weight: bold; }
+        .actions button { padding: 5px 10px; font-size: 12px; margin-right: 5px; }
+        .btn-danger { background: #ef4444 !important; color: #fff !important; }
+        .btn-success { background: #10b981 !important; color: #fff !important; }
     </style>
 </head>
 <body>
 <div class="container">
     <h2>T-HUB Admin Dashboard</h2>
     
-    <div class="form-group">
+    <div class="form-box">
         <h3>Tạo Key Mới Thủ Công</h3>
-        <input type="text" id="customKey" placeholder="Nhập tên key tùy chỉnh...">
-        <input type="number" id="hoursValid" placeholder="Số giờ hiệu lực (VD: 24)" value="24">
-        <button onclick="createNewKey()">Tạo Key</button>
-        <button onclick="loadData()" style="background:#10b981; color:#fff;">Làm Mới Danh Sách</button>
+        <div class="form-group">
+            <input type="text" id="customKey" placeholder="Nhập tên key (VD: THUB_VIP)...">
+            <input type="number" id="hoursValid" placeholder="Số giờ (VD: 24)" value="24">
+            <button onclick="createNewKey()">Tạo Key</button>
+            <button class="btn-success" onclick="loadData()">Làm Mới</button>
+        </div>
     </div>
 
     <h3>Danh Sách Key Hiện Tại (<span id="totalKeys">0</span>)</h3>
@@ -36,111 +42,140 @@
         <thead>
             <tr>
                 <th>Key</th>
-                <th>Trạng Thái / Hạn Sử Dụng</th>
-                <th>Thao Tác</th>
+                <th>Trạng Thái Sử Dụng</th>
+                <th>Thời Gian Còn Lại (Đếm Ngược)</th>
+                <th>Điều Chỉnh Giờ & Thao Tác</th>
             </tr>
         </thead>
         <tbody id="keyList">
-            <tr><td colspan="3" style="text-align: center;">Đang tải dữ liệu...</td></tr>
+            <tr><td colspan="4" style="text-align: center;">Đang tải dữ liệu...</td></tr>
         </tbody>
     </table>
 </div>
 
 <script>
     const NPOINT_URL = "https://api.npoint.io/cd54b4bf2ab3d1bcfa13";
+    let globalDevices = [];
 
     async function loadData() {
         let tbody = document.getElementById("keyList");
-        tbody.innerHTML = `<tr><td colspan="3" style="text-align: center;">Đang tải dữ liệu...</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="4" style="text-align: center;">Đang tải dữ liệu...</td></tr>`;
         try {
             let res = await fetch(NPOINT_URL + "?t=" + Date.now());
             let data = await res.json();
             if (!data || !Array.isArray(data.devices)) data = { devices: [] };
 
-            document.getElementById("totalKeys").innerText = data.devices.length;
-            tbody.innerHTML = "";
-
-            if (data.devices.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="3" style="text-align: center; color:#94a3b8;">Không có key nào trên hệ thống.</td></tr>`;
-                return;
-            }
-
-            let now = Date.now();
-            data.devices.forEach((dev, index) => {
-                let expireDate = new Date(dev.expireTimestamp).toLocaleString();
-                let isExpired = dev.expireTimestamp <= now;
-                let statusText = isExpired ? `<span style="color:#ef4444;">Đã hết hạn (${expireDate})</span>` : `<span style="color:#10b981;">Còn hạn (${expireDate})</span>`;
-
-                let tr = document.createElement("tr");
-                tr.innerHTML = `
-                    <td style="font-family:monospace; color:#38bdf8;">${dev.key}</td>
-                    <td>${statusText}</td>
-                    <td class="actions">
-                        <button onclick="extendKey(${index})">+24h</button>
-                        <button class="danger" onclick="deleteKey(${index})">Xóa</button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
+            globalDevices = data.devices;
+            document.getElementById("totalKeys").innerText = globalDevices.length;
+            renderTable();
         } catch (e) {
-            tbody.innerHTML = `<tr><td colspan="3" style="text-align: center; color:#ef4444;">Lỗi kết nối nPoint!</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color:#ef4444;">Lỗi kết nối nPoint!</td></tr>`;
         }
     }
+
+    function renderTable() {
+        let tbody = document.getElementById("keyList");
+        tbody.innerHTML = "";
+
+        if (globalDevices.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color:#94a3b8;">Không có key nào trên hệ thống.</td></tr>`;
+            return;
+        }
+
+        let now = Date.now();
+        globalDevices.forEach((dev, index) => {
+            let distance = dev.expireTimestamp - now;
+            let timeStr = "";
+            let isExpired = distance <= 0;
+
+            if (isExpired) {
+                timeStr = "<span style='color:#ef4444;'>ĐÃ HẾT HẠN</span>";
+            } else {
+                let h = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                let m = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                let s = Math.floor((distance % (1000 * 60)) / 1000);
+                timeStr = `${h}h ${m}m ${s}s`;
+            }
+
+            let tr = document.createElement("tr");
+            tr.innerHTML = `
+                <td style="font-family:monospace; color:#38bdf8; font-weight:bold;">${dev.key}</td>
+                <td><span class="badge-unused">Chưa sử dụng (Sẵn sàng)</span></td>
+                <td style="font-family:monospace; font-weight:bold; color:#f59e0b;" id="timer_${index}">${timeStr}</td>
+                <td class="actions">
+                    <input type="number" id="add_hours_${index}" placeholder="+ Giờ" style="width:60px; padding:4px;" value="24">
+                    <button class="btn-success" onclick="adjustTime(${index})">Cập nhật</button>
+                    <button class="btn-danger" onclick="deleteKey(${index})">Xóa</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    // Đồng hồ chạy real-time trên trang Admin
+    setInterval(() => {
+        if (globalDevices.length > 0) {
+            let now = Date.now();
+            globalDevices.forEach((dev, index) => {
+                let timerEl = document.getElementById(`timer_${index}`);
+                if (timerEl) {
+                    let distance = dev.expireTimestamp - now;
+                    if (distance <= 0) {
+                        timerEl.innerHTML = "<span style='color:#ef4444;'>ĐÃ HẾT HẠN</span>";
+                    } else {
+                        let h = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                        let m = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                        let s = Math.floor((distance % (1000 * 60)) / 1000);
+                        timerEl.innerText = `${h}h ${m}m ${s}s`;
+                    }
+                }
+            });
+        }
+    }, 1000);
 
     async function createNewKey() {
         let keyVal = document.getElementById("customKey").value.trim();
         let hours = parseFloat(document.getElementById("hoursValid").value) || 24;
         if (!keyVal) { alert("Vui lòng nhập tên key!"); return; }
 
-        let res = await fetch(NPOINT_URL + "?t=" + Date.now());
-        let data = await res.json();
-        if (!data || !Array.isArray(data.devices)) data = { devices: [] };
-
-        data.devices.push({
+        globalDevices.push({
             key: keyVal,
             expireTimestamp: Date.now() + (hours * 60 * 60 * 1000)
         });
 
-        await fetch(NPOINT_URL, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(data)
-        });
-
+        await saveToServer();
         document.getElementById("customKey").value = "";
         alert("Tạo key thành công!");
-        loadData();
     }
 
-    async function extendKey(index) {
-        let res = await fetch(NPOINT_URL + "?t=" + Date.now());
-        let data = await res.json();
-        if (data && data.devices && data.devices[index]) {
-            // Cộng thêm 24 tiếng từ thời điểm hiện tại hoặc thời điểm cũ
-            let baseTime = Math.max(data.devices[index].expireTimestamp, Date.now());
-            data.devices[index].expireTimestamp = baseTime + (24 * 60 * 60 * 1000);
+    async function adjustTime(index) {
+        let inputVal = document.getElementById(`add_hours_${index}`).value;
+        let hoursToAdd = parseFloat(inputVal);
+        if (isNaN(hoursToAdd)) { alert("Vui lòng nhập số giờ hợp lệ!"); return; }
 
-            await fetch(NPOINT_URL, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(data)
-            });
-            loadData();
-        }
+        let baseTime = Math.max(globalDevices[index].expireTimestamp, Date.now());
+        globalDevices[index].expireTimestamp = baseTime + (hoursToAdd * 60 * 60 * 1000);
+
+        await saveToServer();
+        alert("Đã cập nhật thời gian thành công!");
     }
 
     async function deleteKey(index) {
         if (!confirm("Bạn có chắc muốn xóa key này?")) return;
-        let res = await fetch(NPOINT_URL + "?t=" + Date.now());
-        let data = await res.json();
-        if (data && data.devices) {
-            data.devices.splice(index, 1);
+        globalDevices.splice(index, 1);
+        await saveToServer();
+    }
+
+    async function saveToServer() {
+        try {
             await fetch(NPOINT_URL, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(data)
+                body: JSON.stringify({ devices: globalDevices })
             });
             loadData();
+        } catch (e) {
+            alert("Lỗi lưu dữ liệu lên nPoint!");
         }
     }
 
