@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>T-HUB | Quản Lý Admin</title>
+    <title>T-HUB | Quản Lý Admin & Đếm Ngược</title>
     <style>
         body {
             background-color: #060913;
@@ -13,7 +13,7 @@
         }
         h2 { color: #38bdf8; text-align: center; }
         .table-container {
-            max-width: 900px;
+            max-width: 950px;
             margin: 0 auto;
             background: rgba(17, 24, 39, 0.9);
             padding: 20px;
@@ -35,6 +35,8 @@
         th { color: #38bdf8; background: rgba(56, 189, 248, 0.1); }
         td { color: #94a3b8; }
         .key-val { color: #10b981; font-family: monospace; font-weight: bold; }
+        .timer-val { color: #f59e0b; font-family: monospace; font-weight: bold; }
+        .expired { color: #ef4444 !important; }
         .refresh-btn {
             display: block;
             margin: 0 auto 20px auto;
@@ -52,7 +54,7 @@
 <body>
 
     <div class="table-container">
-        <h2>Bảng Quản Trị Key Thiết Bị</h2>
+        <h2>Bảng Quản Trị - Đếm Ngược Thời Gian Key (24h)</h2>
         <button class="refresh-btn" onclick="loadAdminData()">Làm Mới Danh Sách</button>
         
         <table>
@@ -61,7 +63,7 @@
                     <th>STT</th>
                     <th>Mã HWID Thiết Bị</th>
                     <th>Key Cấp Phát</th>
-                    <th>Thời Gian Tạo</th>
+                    <th>Thời Gian Còn Lại</th>
                 </tr>
             </thead>
             <tbody id="deviceTableBody">
@@ -72,10 +74,13 @@
 
     <script>
         const NPOINT_KEYS_URL = "https://api.npoint.io/1e1e56ce8cfde33529d9"; // Dùng chung link nPoint với trang user
+        let countdownInterval = null;
 
         async function loadAdminData() {
             let tbody = document.getElementById("deviceTableBody");
             tbody.innerHTML = `<tr><td colspan="4" style="text-align: center;">Đang tải dữ liệu...</td></tr>`;
+
+            if (countdownInterval) clearInterval(countdownInterval);
 
             try {
                 let res = await fetch(NPOINT_KEYS_URL + "?t=" + Date.now(), { cache: "no-store" });
@@ -93,15 +98,44 @@
                             <td>${index + 1}</td>
                             <td>${item.hwid}</td>
                             <td class="key-val">${item.key}</td>
-                            <td>${item.createdTime || 'N/A'}</td>
+                            <td class="timer-val" data-expire="${item.expireTimestamp}">Đang tính...</td>
                         </tr>
                     `;
                 });
                 tbody.innerHTML = html;
 
+                // Bắt đầu chạy đồng hồ đếm ngược trên bảng admin
+                updateAllTimers();
+                countdownInterval = setInterval(updateAllTimers, 1000);
+
             } catch (err) {
                 tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: #ef4444;">Lỗi tải dữ liệu từ nPoint!</td></tr>`;
             }
+        }
+
+        function updateAllTimers() {
+            let timerElements = document.querySelectorAll(".timer-val");
+            let now = Date.now();
+
+            timerElements.forEach(el => {
+                let expireTimestamp = parseInt(el.getAttribute("data-expire"));
+                let distance = expireTimestamp - now;
+
+                if (distance <= 0) {
+                    el.innerText = "ĐÃ HẾT HẠN";
+                    el.className = "timer-val expired";
+                    return;
+                }
+
+                let hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                let minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                let seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+                el.innerText = 
+                    (hours < 10 ? "0" + hours : hours) + ":" + 
+                    (minutes < 10 ? "0" + minutes : minutes) + ":" + 
+                    (seconds < 10 ? "0" + seconds : seconds);
+            });
         }
 
         loadAdminData();
