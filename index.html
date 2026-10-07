@@ -19,7 +19,7 @@
             background: rgba(17, 24, 39, 0.85);
             padding: 25px;
             border-radius: 20px;
-            width: 550px;
+            width: 500px;
             max-height: 90vh;
             overflow-y: auto;
             border: 1px solid rgba(56, 189, 248, 0.2);
@@ -36,7 +36,7 @@
             font-size: 11px;
         }
         .device-item div {
-            margin-bottom: 4px;
+            margin-bottom: 5px;
             word-break: break-all;
         }
         .action-box {
@@ -67,10 +67,9 @@
 
     <script>
         const NPOINT_URL = "https://api.npoint.io/1e1e56ce8cfde33529d9";
-        let isInteracting = false; // Biến kiểm tra xem admin có đang chọn menu hay không
+        let isInteracting = false;
 
         async function loadAdminData() {
-            // Nếu Admin đang click chọn thẻ select thì tạm dừng việc nạp lại giao diện để tránh bị tắt
             if (isInteracting) return;
 
             let container = document.getElementById("adminList");
@@ -98,13 +97,11 @@
                         : `<span style='color:#10b981'>Còn lại: ${Math.floor(timeLeft / 3600000)}h ${Math.floor((timeLeft % 3600000) / 60000)}m ${Math.floor((timeLeft % 60000) / 1000)}s</span>`;
 
                     let deviceInfo = user.deviceInfo || "Không rõ thiết bị";
-                    let userAgent = user.userAgent || "Không rõ trình duyệt";
 
                     html += `
                         <div class="device-item">
+                            <div><b>Thiết bị:</b> <span style="color:#38bdf8; font-size: 12px; font-weight: bold;">${deviceInfo}</span></div>
                             <div><b>HWID:</b> ${user.hwid}</div>
-                            <div><b>Thiết bị:</b> <span style="color:#38bdf8">${deviceInfo}</span></div>
-                            <div><b>Trình duyệt:</b> <span style="color:#94a3b8">${userAgent}</span></div>
                             <div><b>Trạng thái:</b> ${timeStr}</div>
                             <div class="action-box">
                                 <select id="select_${index}" onfocus="isInteracting = true" onblur="isInteracting = false">
@@ -161,7 +158,6 @@
             }
         }
 
-        // Tự động làm mới bảng Admin mỗi 2 giây
         setInterval(loadAdminData, 2000);
         loadAdminData();
     </script>
