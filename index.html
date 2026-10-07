@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>T-HUB | Quản Lý Admin & Đếm Ngược</title>
+    <title>T-HUB | Quản Lý Admin & Đồng Bộ Key</title>
     <style>
         body {
             background-color: #060913;
@@ -54,7 +54,7 @@
 <body>
 
     <div class="table-container">
-        <h2>Bảng Quản Trị - Đếm Ngược Thời Gian Key (24h)</h2>
+        <h2>Bảng Quản Trị - Đồng Bộ Danh Sách Key (24h)</h2>
         <button class="refresh-btn" onclick="loadAdminData()">Làm Mới Danh Sách</button>
         
         <table>
@@ -67,18 +67,18 @@
                 </tr>
             </thead>
             <tbody id="deviceTableBody">
-                <tr><td colspan="4" style="text-align: center;">Đang tải dữ liệu...</td></tr>
+                <tr><td colspan="4" style="text-align: center;">Đang đồng bộ dữ liệu...</td></tr>
             </tbody>
         </table>
     </div>
 
     <script>
-        const NPOINT_KEYS_URL = "https://api.npoint.io/1e1e56ce8cfde33529d9"; // Dùng chung link nPoint với trang user
+        const NPOINT_KEYS_URL = "https://api.npoint.io/157021b9013a10d8205f";
         let countdownInterval = null;
 
         async function loadAdminData() {
             let tbody = document.getElementById("deviceTableBody");
-            tbody.innerHTML = `<tr><td colspan="4" style="text-align: center;">Đang tải dữ liệu...</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="4" style="text-align: center;">Đang đồng bộ dữ liệu...</td></tr>`;
 
             if (countdownInterval) clearInterval(countdownInterval);
 
@@ -104,12 +104,11 @@
                 });
                 tbody.innerHTML = html;
 
-                // Bắt đầu chạy đồng hồ đếm ngược trên bảng admin
                 updateAllTimers();
                 countdownInterval = setInterval(updateAllTimers, 1000);
 
             } catch (err) {
-                tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: #ef4444;">Lỗi tải dữ liệu từ nPoint!</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: #ef4444;">Lỗi đồng bộ dữ liệu từ nPoint!</td></tr>`;
             }
         }
 
