@@ -21,7 +21,7 @@
             backdrop-filter: blur(12px);
             padding: 30px;
             border-radius: 20px;
-            width: 480px;
+            width: 520px;
             box-shadow: 0 15px 35px rgba(0, 0, 0, 0.8), 0 0 20px rgba(56, 189, 248, 0.15);
             border: 1px solid rgba(56, 189, 248, 0.2);
         }
@@ -61,7 +61,7 @@
             background: #0b0f19;
             padding: 12px;
             border-radius: 10px;
-            max-height: 320px;
+            max-height: 380px;
             overflow-y: auto;
             border: 1px solid #1e293b;
             font-family: monospace;
@@ -69,7 +69,7 @@
         }
         .key-item {
             background: #111827;
-            padding: 10px;
+            padding: 12px;
             border-radius: 8px;
             margin-bottom: 10px;
             border-left: 4px solid #38bdf8;
@@ -77,12 +77,32 @@
         }
         .key-item.expired {
             border-left-color: #ef4444;
-            opacity: 0.65;
+            opacity: 0.75;
         }
         .key-string { color: #7dd3fc; word-break: break-all; margin: 4px 0; }
         .badge { font-weight: bold; }
         .badge-active { color: #10b981; }
         .badge-expired { color: #ef4444; }
+
+        .action-group {
+            display: flex;
+            gap: 6px;
+            margin-top: 8px;
+        }
+        .action-group button {
+            flex: 1;
+            padding: 6px;
+            font-size: 10px;
+            font-weight: bold;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .btn-add { background: #10b981; color: white; }
+        .btn-add:hover { background: #059669; }
+        .btn-sub { background: #ef4444; color: white; }
+        .btn-sub:hover { background: #dc2626; }
     </style>
 </head>
 <body>
@@ -92,17 +112,17 @@
             <img src="logo.png" alt="T-HUB Logo" class="logo-img" onerror="this.src='https://i.imgur.com/6X93ZgV.png'">
             <div>
                 <h2>T-HUB Admin Panel</h2>
-                <div class="subtitle">Giám sát hệ thống Key trực tuyến (Cloud)</div>
+                <div class="subtitle">Quản lý và kiểm soát thời gian thiết bị (Cloud)</div>
             </div>
         </div>
         
         <div class="stats-box">
             <div class="stat-card">
-                Tổng Key trên Cloud
+                Tổng Thiết Bị
                 <span id="totalKeys">0</span>
             </div>
             <div class="stat-card">
-                Đang hoạt động
+                Đang Hoạt Động
                 <span id="activeKeys" style="color: #10b981;">0</span>
             </div>
         </div>
@@ -115,16 +135,15 @@
 
         async function loadAdminData() {
             let listContainer = document.getElementById("adminHistoryList");
-            let now = Math.floor(Date.now() / 1000); // Thời gian hiện tại dạng giây (khớp với os.time())
+            let now = Date.now(); // Sử dụng Millisecond đồng bộ với trang Client
 
             try {
-                // Thêm { cache: "no-store" } để tránh trình duyệt lưu cache cũ, đảm bảo lấy dữ liệu mới nhất từ npoint
                 let response = await fetch(NPOINT_API_URL, { cache: "no-store" });
                 let data = await response.json();
-                let keyHistory = data.keys || [];
+                let users = data.users || [];
 
-                if (keyHistory.length === 0) {
-                    listContainer.innerHTML = "<div style='text-align:center; color:#64748b; padding: 20px;'>Chưa có bản ghi nào trên hệ thống.</div>";
+                if (users.length === 0) {
+                    listContainer.innerHTML = "<div style='text-align:center; color:#64748b; padding: 20px;'>Chưa có thiết bị nào kích hoạt trên hệ thống.</div>";
                     document.getElementById("totalKeys").innerText = "0";
                     document.getElementById("activeKeys").innerText = "0";
                     return;
@@ -133,8 +152,7 @@
                 let activeCount = 0;
                 let html = "";
 
-                // Đảo ngược để hiển thị key mới nhất lên đầu danh sách
-                keyHistory.slice().reverse().forEach((item, index) => {
+                users.slice().reverse().forEach((item, index) => {
                     let expireTime = Number(item.expireTimestamp);
                     let timeLeft = expireTime - now;
                     let isExpired = timeLeft <= 0;
@@ -145,23 +163,36 @@
                     if (isExpired) {
                         timeStr = "<span class='badge badge-expired'>[Đã hết hạn]</span>";
                     } else {
-                        let hours = Math.floor(timeLeft / 3600);
-                        let minutes = Math.floor((timeLeft % 3600) / 60);
-                        let seconds = timeLeft % 60;
-                        timeStr = `<span class='badge badge-active'>Còn lại: ${hours}h ${minutes}m ${seconds}s</span>`;
+                        let days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
+                        let hours = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                        let minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+                        let seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+                        
+                        let textTime = "";
+                        if (days > 0) textTime += days + "d ";
+                        textTime += hours + "h " + minutes + "m " + seconds + "s";
+                        timeStr = `<span class='badge badge-active'>Còn lại: ${textTime}</span>`;
                     }
+
+                    let realIndex = users.length - 1 - index;
 
                     html += `
                         <div class="key-item ${isExpired ? 'expired' : ''}">
-                            <div><b>#${keyHistory.length - index}</b> | ${timeStr}</div>
-                            <div class="key-string">🔑 ${item.key}</div>
-                            <div style="font-size:10px; color:#94a3b8;">HWID: ${item.hwid || 'Chưa kích hoạt'}</div>
+                            <div><b>#${users.length - index}</b> | ${timeStr}</div>
+                            <div class="key-string">💻 HWID: ${item.hwid}</div>
+                            <div style="color: #fbbf24; margin-bottom: 6px;">🎮 Game: ${item.gameName || 'T-HUB Script'}</div>
+                            <div class="action-group">
+                                <button class="btn-add" onclick="modifyTime(${realIndex}, 24)">+24 Giờ</button>
+                                <button class="btn-add" onclick="modifyTime(${realIndex}, 1)">+1 Giờ</button>
+                                <button class="btn-sub" onclick="modifyTime(${realIndex}, -1)">-1 Giờ</button>
+                                <button class="btn-sub" onclick="modifyTime(${realIndex}, -24)">-24 Giờ</button>
+                            </div>
                         </div>
                     `;
                 });
 
                 listContainer.innerHTML = html;
-                document.getElementById("totalKeys").innerText = keyHistory.length;
+                document.getElementById("totalKeys").innerText = users.length;
                 document.getElementById("activeKeys").innerText = activeCount;
 
             } catch (err) {
@@ -170,8 +201,52 @@
             }
         }
 
-        // Tự động làm mới dữ liệu mỗi 2 giây để cập nhật thời gian thực từ người dùng khác gửi lên
-        setInterval(loadAdminData, 2000);
+        // Hàm thay đổi (cộng/trừ) thời gian của máy trực tiếp trên Cloud
+        async function modifyTime(userIndex, hours) {
+            try {
+                let response = await fetch(NPOINT_API_URL, { cache: "no-store" });
+                let data = await response.json();
+                
+                if (!data || !Array.isArray(data.users) || !data.users[userIndex]) {
+                    alert("Không tìm thấy thiết bị này trên Cloud!");
+                    return;
+                }
+
+                let now = Date.now();
+                let currentExpire = Number(data.users[userIndex].expireTimestamp);
+                let baseTime = currentExpire > now ? currentExpire : now;
+                
+                let addedMs = hours * 60 * 60 * 1000;
+                let newExpireTime = baseTime + addedMs;
+                
+                // Đảm bảo thời gian hết hạn không nhỏ hơn thời gian hiện tại nếu là trừ thời gian quá đà
+                if (newExpireTime < now) {
+                    newExpireTime = now;
+                }
+
+                data.users[userIndex].expireTimestamp = newExpireTime;
+
+                // Gửi dữ liệu cập nhật lên nPoint
+                let updateRes = await fetch(NPOINT_API_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(data)
+                });
+
+                if (updateRes.ok) {
+                    alert(`Thành công! Đã ${hours > 0 ? 'cộng thêm' : 'trừ bớt'} ${Math.abs(hours)} giờ cho thiết bị.`);
+                    loadAdminData();
+                } else {
+                    alert("Lỗi khi lưu dữ liệu lên Cloud!");
+                }
+            } catch (err) {
+                console.error(err);
+                alert("Đã xảy ra lỗi kết nối!");
+            }
+        }
+
+        // Làm mới dữ liệu định kỳ mỗi 3 giây
+        setInterval(loadAdminData, 3000);
         loadAdminData();
     </script>
 </body>
