@@ -3,193 +3,107 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>T-HUB | Admin Panel</title>
+    <title>T-HUB | Quản Lý Admin</title>
     <style>
         body {
             background-color: #060913;
             color: #ffffff;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
+            padding: 30px;
         }
-        .container {
-            background: rgba(17, 24, 39, 0.85);
-            padding: 25px;
-            border-radius: 20px;
-            width: 520px;
-            max-height: 90vh;
-            overflow-y: auto;
-            border: 1px solid rgba(56, 189, 248, 0.2);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+        h2 { color: #38bdf8; text-align: center; }
+        .table-container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: rgba(17, 24, 39, 0.9);
+            padding: 20px;
+            border-radius: 15px;
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.6);
         }
-        h2 { color: #38bdf8; margin-top: 0; font-size: 18px; text-align: center; }
-        .device-item {
-            background: #111827;
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        th, td {
             padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 12px;
-            border: 1px solid #1e293b;
-            font-family: monospace;
-            font-size: 11px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 14px;
         }
-        .device-item div {
-            margin-bottom: 5px;
-            word-break: break-all;
-        }
-        .action-box {
-            display: flex;
-            gap: 5px;
-            margin-top: 8px;
-            align-items: center;
-        }
-        select, button {
-            padding: 6px 10px;
-            font-size: 11px;
-            font-weight: bold;
-            border-radius: 6px;
+        th { color: #38bdf8; background: rgba(56, 189, 248, 0.1); }
+        td { color: #94a3b8; }
+        .key-val { color: #10b981; font-family: monospace; font-weight: bold; }
+        .refresh-btn {
+            display: block;
+            margin: 0 auto 20px auto;
+            background: #38bdf8;
+            color: #060913;
             border: none;
+            padding: 10px 20px;
+            font-weight: bold;
+            border-radius: 8px;
             cursor: pointer;
         }
-        select { background: #1e293b; color: #38bdf8; border: 1px solid #334155; flex-grow: 1; }
-        .btn-add { background: #10b981; color: white; }
-        .btn-add:hover { background: #059669; }
-        .btn-delete { background: #ef4444; color: white; }
-        .btn-delete:hover { background: #dc2626; }
+        .refresh-btn:hover { background: #0ea5e9; }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <h2>T-HUB Admin Panel</h2>
-        <div id="adminList">Đang tải dữ liệu từ hệ thống...</div>
+    <div class="table-container">
+        <h2>Bảng Quản Trị Key Thiết Bị</h2>
+        <button class="refresh-btn" onclick="loadAdminData()">Làm Mới Danh Sách</button>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>STT</th>
+                    <th>Mã HWID Thiết Bị</th>
+                    <th>Key Cấp Phát</th>
+                    <th>Thời Gian Tạo</th>
+                </tr>
+            </thead>
+            <tbody id="deviceTableBody">
+                <tr><td colspan="4" style="text-align: center;">Đang tải dữ liệu...</td></tr>
+            </tbody>
+        </table>
     </div>
 
     <script>
-        const NPOINT_URL = "https://api.npoint.io/1e1e56ce8cfde33529d9";
-        let isInteracting = false;
+        const NPOINT_KEYS_URL = "https://api.npoint.io/1e1e56ce8cfde33529d9"; // Dùng chung link nPoint với trang user
 
         async function loadAdminData() {
-            if (isInteracting) return;
+            let tbody = document.getElementById("deviceTableBody");
+            tbody.innerHTML = `<tr><td colspan="4" style="text-align: center;">Đang tải dữ liệu...</td></tr>`;
 
-            let container = document.getElementById("adminList");
             try {
-                let res = await fetch(NPOINT_URL, { cache: "no-store" });
+                let res = await fetch(NPOINT_KEYS_URL + "?t=" + Date.now(), { cache: "no-store" });
                 let data = await res.json();
                 
-                let users = [];
-                if (data && Array.isArray(data.users)) users = data.users;
-
-                if (users.length === 0) {
-                    container.innerHTML = "<div style='text-align:center; color:#64748b; padding:20px;'>Chưa có thiết bị nào kết nối.</div>";
+                if (!data || !Array.isArray(data.devices) || data.devices.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="4" style="text-align: center;">Chưa có thiết bị nào lấy key.</td></tr>`;
                     return;
                 }
 
                 let html = "";
-                let now = Date.now();
-
-                users.forEach((user, index) => {
-                    let timeLeft = user.expireTimestamp - now;
-                    let isExpired = user.expireTimestamp === 0 || timeLeft <= 0;
-
-                    let timeStr = isExpired 
-                        ? "<span style='color:#ef4444'>0 Giờ (Chưa kích hoạt)</span>" 
-                        : `<span style='color:#10b981'>Còn lại: ${Math.floor(timeLeft / 3600000)}h ${Math.floor((timeLeft % 3600000) / 60000)}m ${Math.floor((timeLeft % 60000) / 1000)}s</span>`;
-
-                    let deviceInfo = user.deviceInfo || "Không rõ thiết bị";
-
+                data.devices.forEach((item, index) => {
                     html += `
-                        <div class="device-item">
-                            <div><b>Thiết bị:</b> <span style="color:#38bdf8; font-size: 12px; font-weight: bold;">${deviceInfo}</span></div>
-                            <div><b>HWID:</b> ${user.hwid}</div>
-                            <div><b>Trạng thái:</b> ${timeStr}</div>
-                            <div class="action-box">
-                                <select id="select_${index}" onfocus="isInteracting = true" onblur="isInteracting = false">
-                                    <option value="1">+1 Giờ</option>
-                                    <option value="2">+2 Giờ</option>
-                                    <option value="5">+5 Giờ</option>
-                                    <option value="12">+12 Giờ</option>
-                                    <option value="24" selected>+24 Giờ</option>
-                                    <option value="48">+48 Giờ</option>
-                                    <option value="-1">-1 Giờ</option>
-                                    <option value="-24">-24 Giờ</option>
-                                </select>
-                                <button class="btn-add" onclick="modifyUserTime(${index})">Xác nhận</button>
-                                <button class="btn-delete" onclick="deleteUserHwid(${index})">Xóa mã máy</button>
-                            </div>
-                        </div>
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td>${item.hwid}</td>
+                            <td class="key-val">${item.key}</td>
+                            <td>${item.createdTime || 'N/A'}</td>
+                        </tr>
                     `;
                 });
+                tbody.innerHTML = html;
 
-                container.innerHTML = html;
             } catch (err) {
-                container.innerHTML = "<div style='text-align:center; color:#ef4444;'>Lỗi kết nối tới nPoint API!</div>";
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: #ef4444;">Lỗi tải dữ liệu từ nPoint!</td></tr>`;
             }
         }
 
-        async function modifyUserTime(index) {
-            isInteracting = false;
-            let selectEl = document.getElementById(`select_${index}`);
-            let hours = parseInt(selectEl.value);
-            
-            try {
-                let res = await fetch(NPOINT_URL, { cache: "no-store" });
-                let data = await res.json();
-                let users = data.users;
-
-                let now = Date.now();
-                let currentExpire = Number(users[index].expireTimestamp || 0);
-                let baseTime = currentExpire > now ? currentExpire : now;
-
-                let newExpire = baseTime + (hours * 60 * 60 * 1000);
-                if (newExpire < now) newExpire = now;
-
-                users[index].expireTimestamp = newExpire;
-
-                await fetch(NPOINT_URL, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(data)
-                });
-
-                alert("Cập nhật thời gian thành công!");
-                loadAdminData();
-            } catch (err) {
-                alert("Lỗi khi lưu dữ liệu!");
-            }
-        }
-
-        async function deleteUserHwid(index) {
-            isInteracting = false;
-            if (!confirm("Bạn có chắc chắn muốn xóa mã máy này? Thiết bị của người dùng sẽ bị xóa và tự động cấp mã máy mới!")) return;
-
-            try {
-                let res = await fetch(NPOINT_URL, { cache: "no-store" });
-                let data = await res.json();
-                let users = data.users;
-
-                // Đánh dấu cờ để thiết bị tự reset hoặc xóa trực tiếp khỏi mảng
-                users[index].forceReset = true;
-                
-                // Hoặc xóa hẳn khỏi danh sách
-                users.splice(index, 1);
-
-                await fetch(NPOINT_URL, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(data)
-                });
-
-                alert("Đã xóa mã máy thành công!");
-                loadAdminData();
-            } catch (err) {
-                alert("Lỗi khi xóa mã máy!");
-            }
-        }
-
-        setInterval(loadAdminData, 2000);
         loadAdminData();
     </script>
 </body>
