@@ -19,19 +19,25 @@
             background: rgba(17, 24, 39, 0.85);
             padding: 25px;
             border-radius: 20px;
-            width: 500px;
+            width: 550px;
+            max-height: 90vh;
+            overflow-y: auto;
             border: 1px solid rgba(56, 189, 248, 0.2);
             box-shadow: 0 10px 30px rgba(0,0,0,0.8);
         }
-        h2 { color: #38bdf8; margin-top: 0; font-size: 18px; }
+        h2 { color: #38bdf8; margin-top: 0; font-size: 18px; text-align: center; }
         .device-item {
             background: #111827;
             padding: 12px;
             border-radius: 8px;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
             border: 1px solid #1e293b;
             font-family: monospace;
             font-size: 11px;
+        }
+        .device-item div {
+            margin-bottom: 4px;
+            word-break: break-all;
         }
         .action-box {
             display: flex;
@@ -47,22 +53,26 @@
             border: none;
             cursor: pointer;
         }
-        select { background: #1e293b; color: #38bdf8; border: 1px solid #334155; }
+        select { background: #1e293b; color: #38bdf8; border: 1px solid #334155; flex-grow: 1; }
         .btn-add { background: #10b981; color: white; }
+        .btn-add:hover { background: #059669; }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <h2>T-HUB Admin Panel (nPoint)</h2>
+        <h2>T-HUB Admin Panel</h2>
         <div id="adminList">Đang tải dữ liệu từ nPoint...</div>
     </div>
 
     <script>
-        // Link nPoint của bạn
         const NPOINT_URL = "https://api.npoint.io/1e1e56ce8cfde33529d9";
+        let isInteracting = false; // Biến kiểm tra xem admin có đang chọn menu hay không
 
         async function loadAdminData() {
+            // Nếu Admin đang click chọn thẻ select thì tạm dừng việc nạp lại giao diện để tránh bị tắt
+            if (isInteracting) return;
+
             let container = document.getElementById("adminList");
             try {
                 let res = await fetch(NPOINT_URL, { cache: "no-store" });
@@ -87,12 +97,17 @@
                         ? "<span style='color:#ef4444'>0 Giờ (Chưa kích hoạt)</span>" 
                         : `<span style='color:#10b981'>Còn lại: ${Math.floor(timeLeft / 3600000)}h ${Math.floor((timeLeft % 3600000) / 60000)}m ${Math.floor((timeLeft % 60000) / 1000)}s</span>`;
 
+                    let deviceInfo = user.deviceInfo || "Không rõ thiết bị";
+                    let userAgent = user.userAgent || "Không rõ trình duyệt";
+
                     html += `
                         <div class="device-item">
                             <div><b>HWID:</b> ${user.hwid}</div>
+                            <div><b>Thiết bị:</b> <span style="color:#38bdf8">${deviceInfo}</span></div>
+                            <div><b>Trình duyệt:</b> <span style="color:#94a3b8">${userAgent}</span></div>
                             <div><b>Trạng thái:</b> ${timeStr}</div>
                             <div class="action-box">
-                                <select id="select_${index}">
+                                <select id="select_${index}" onfocus="isInteracting = true" onblur="isInteracting = false">
                                     <option value="1">+1 Giờ</option>
                                     <option value="2">+2 Giờ</option>
                                     <option value="5">+5 Giờ</option>
@@ -115,7 +130,10 @@
         }
 
         async function modifyUserTime(index) {
-            let hours = parseInt(document.getElementById(`select_${index}`).value);
+            isInteracting = false;
+            let selectEl = document.getElementById(`select_${index}`);
+            let hours = parseInt(selectEl.value);
+            
             try {
                 let res = await fetch(NPOINT_URL, { cache: "no-store" });
                 let data = await res.json();
@@ -143,6 +161,7 @@
             }
         }
 
+        // Tự động làm mới bảng Admin mỗi 2 giây
         setInterval(loadAdminData, 2000);
         loadAdminData();
     </script>
