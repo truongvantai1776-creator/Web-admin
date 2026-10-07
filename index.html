@@ -1,54 +1,159 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>T-HUB | Admin Dashboard</title>
     <style>
-        body { background: #060913; color: #fff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; }
-        .container { max-width: 900px; margin: 0 auto; background: rgba(17, 24, 39, 0.95); padding: 25px; border-radius: 12px; border: 1px solid #38bdf8; }
-        h2 { color: #38bdf8; text-align: center; }
-        .form-box { background: #0b1329; padding: 15px; border-radius: 8px; border: 1px dashed #38bdf8; margin-bottom: 20px; }
-        .form-group { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
-        input { padding: 10px; border-radius: 6px; border: 1px solid #38bdf8; background: #060913; color: #fff; flex: 1; min-width: 150px; }
-        button { padding: 10px 15px; border-radius: 6px; border: none; background: #38bdf8; color: #060913; font-weight: bold; cursor: pointer; }
-        button:hover { background: #0ea5e9; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th, td { border: 1px solid #1e293b; padding: 12px; text-align: left; font-size: 13px; }
-        th { background: #0b1329; color: #38bdf8; }
-        .badge-unused { color: #10b981; font-weight: bold; }
-        .badge-expired { color: #ef4444; font-weight: bold; }
-        .actions button { padding: 5px 10px; font-size: 12px; margin-right: 5px; }
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Inter:wght@400;600&display=swap');
+
+        body { 
+            background: #030712; 
+            background-image: radial-gradient(circle at 50% 20%, #0c2042 0%, #030712 90%);
+            color: #fff; 
+            font-family: 'Inter', sans-serif; 
+            padding: 30px; 
+            min-height: 100vh;
+        }
+
+        .lang-switch {
+            position: absolute;
+            top: 25px;
+            right: 35px;
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid rgba(56, 189, 248, 0.4);
+            color: #38bdf8;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: bold;
+            font-size: 12px;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+        .lang-switch:hover {
+            background: #38bdf8;
+            color: #030712;
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.6);
+        }
+
+        .container { 
+            max-width: 950px; 
+            margin: 40px auto; 
+            background: rgba(11, 19, 43, 0.75); 
+            padding: 35px; 
+            border-radius: 20px; 
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8), 0 0 30px rgba(56, 189, 248, 0.1);
+            backdrop-filter: blur(20px);
+        }
+
+        h2 { 
+            font-family: 'Orbitron', sans-serif;
+            color: #38bdf8; 
+            text-align: center; 
+            font-size: 26px;
+            text-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
+            margin-bottom: 25px;
+        }
+
+        h3 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 15px;
+            color: #7dd3fc;
+        }
+
+        .form-box { 
+            background: rgba(3, 7, 18, 0.8); 
+            padding: 20px; 
+            border-radius: 12px; 
+            border: 1px dashed rgba(56, 189, 248, 0.4); 
+            margin-bottom: 25px; 
+        }
+
+        .form-group { 
+            display: flex; 
+            gap: 12px; 
+            margin-top: 12px; 
+            flex-wrap: wrap; 
+        }
+
+        input { 
+            padding: 12px 15px; 
+            border-radius: 8px; 
+            border: 1px solid rgba(56, 189, 248, 0.4); 
+            background: rgba(6, 9, 19, 0.9); 
+            color: #fff; 
+            flex: 1; 
+            min-width: 160px; 
+            font-family: 'Inter', sans-serif;
+        }
+        input:focus {
+            outline: none;
+            border-color: #38bdf8;
+            box-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
+        }
+
+        button { 
+            padding: 12px 20px; 
+            border-radius: 8px; 
+            border: none; 
+            background: #38bdf8; 
+            color: #030712; 
+            font-family: 'Orbitron', sans-serif;
+            font-weight: bold; 
+            cursor: pointer; 
+            transition: all 0.3s ease;
+        }
+        button:hover { 
+            background: #7dd3fc; 
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.6);
+        }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid rgba(30, 41, 59, 0.8); padding: 14px; text-align: left; font-size: 13px; }
+        th { background: rgba(3, 7, 18, 0.9); color: #38bdf8; font-family: 'Orbitron', sans-serif; font-size: 12px; }
+        
+        .badge-unused { color: #10b981; font-weight: bold; background: rgba(16,185,129,0.1); padding: 4px 8px; border-radius: 6px; border: 1px solid #10b981; font-size: 11px; }
+        .badge-used { color: #ef4444; font-weight: bold; background: rgba(239,68,68,0.1); padding: 4px 8px; border-radius: 6px; border: 1px solid #ef4444; font-size: 11px; }
+
+        .actions button { padding: 6px 12px; font-size: 11px; margin-right: 5px; }
         .btn-danger { background: #ef4444 !important; color: #fff !important; }
+        .btn-danger:hover { box-shadow: 0 0 10px rgba(239, 68, 68, 0.6) !important; }
         .btn-success { background: #10b981 !important; color: #fff !important; }
+        .btn-success:hover { box-shadow: 0 0 10px rgba(16, 185, 129, 0.6) !important; }
     </style>
 </head>
 <body>
+
+<button class="lang-switch" onclick="toggleLanguage()">🌐 EN / VI</button>
+
 <div class="container">
-    <h2>T-HUB Admin Dashboard</h2>
+    <h2 id="mainHeading">T-HUB Admin Dashboard</h2>
     
     <div class="form-box">
-        <h3>Tạo Key Mới Thủ Công</h3>
+        <h3 id="createTitle">Manual Key Generator</h3>
         <div class="form-group">
-            <input type="text" id="customKey" placeholder="Nhập tên key (VD: THUB_VIP)...">
-            <input type="number" id="hoursValid" placeholder="Số giờ (VD: 24)" value="24">
-            <button onclick="createNewKey()">Tạo Key</button>
-            <button class="btn-success" onclick="loadData()">Làm Mới</button>
+            <input type="text" id="customKey" placeholder="Enter custom key (e.g., THUB_VIP)...">
+            <input type="number" id="hoursValid" placeholder="Hours (e.g., 24)" value="24">
+            <button onclick="createNewKey()" id="createBtn">Create Key</button>
+            <button class="btn-success" onclick="loadData()" id="refreshBtn">Refresh</button>
         </div>
     </div>
 
-    <h3>Danh Sách Key Hiện Tại (<span id="totalKeys">0</span>)</h3>
+    <h3 id="listTitle">Active Keys Management (<span id="totalKeys">0</span>)</h3>
     <table>
         <thead>
             <tr>
-                <th>Key</th>
-                <th>Trạng Thái Sử Dụng</th>
-                <th>Thời Gian Còn Lại (Đếm Ngược)</th>
-                <th>Điều Chỉnh Giờ & Thao Tác</th>
+                <th id="thKey">Key String</th>
+                <th id="thStatus">Usage Status</th>
+                <th id="thTimer">Real-time Countdown</th>
+                <th id="thAction">Time Adjustment & Actions</th>
             </tr>
         </thead>
         <tbody id="keyList">
-            <tr><td colspan="4" style="text-align: center;">Đang tải dữ liệu...</td></tr>
+            <tr><td colspan="4" style="text-align: center;" id="loadingText">Loading data from server...</td></tr>
         </tbody>
     </table>
 </div>
@@ -56,10 +161,86 @@
 <script>
     const NPOINT_URL = "https://api.npoint.io/cd54b4bf2ab3d1bcfa13";
     let globalDevices = [];
+    let currentLang = "en";
+
+    const adminTexts = {
+        en: {
+            heading: "T-HUB Admin Dashboard",
+            createTitle: "Manual Key Generator",
+            placeholderKey: "Enter custom key (e.g., THUB_VIP)...",
+            placeholderHours: "Hours (e.g., 24)",
+            createBtn: "Create Key",
+            refreshBtn: "Refresh",
+            listTitle: "Active Keys Management",
+            thKey: "Key String",
+            thStatus: "Usage Status",
+            thTimer: "Real-time Countdown",
+            thAction: "Time Adjustment & Actions",
+            loading: "Loading data from server...",
+            statusUnused: "Unused (Ready)",
+            statusUsed: "Used (Activated)",
+            updateBtn: "Update",
+            deleteBtn: "Delete",
+            expiredText: "EXPIRED",
+            alertNoKey: "Please enter a key name!",
+            alertValidHours: "Please enter valid hours!",
+            successCreate: "Key created successfully!",
+            successUpdate: "Time updated successfully!",
+            confirmDelete: "Are you sure you want to delete this key?",
+            errorLoad: "Connection error to nPoint!"
+        },
+        vi: {
+            heading: "T-HUB Bảng Điều Khiển Admin",
+            createTitle: "Tạo Key Thủ Công",
+            placeholderKey: "Nhập tên key (VD: THUB_VIP)...",
+            placeholderHours: "Số giờ (VD: 24)",
+            createBtn: "Tạo Key",
+            refreshBtn: "Làm Mới",
+            listTitle: "Quản Lý Danh Sách Key",
+            thKey: "Mã Key",
+            thStatus: "Trạng Thái Sử Dụng",
+            thTimer: "Đếm Ngược Thời Gian Thực",
+            thAction: "Điều Chỉnh Giờ & Thao Tác",
+            loading: "Đang tải dữ liệu từ máy chủ...",
+            statusUnused: "Chưa Dùng (Sẵn Sàng)",
+            statusUsed: "Đã Sử Dụng (Kích Hoạt)",
+            updateBtn: "Cập Nhật",
+            deleteBtn: "Xóa",
+            expiredText: "ĐÃ HẾT HẠN",
+            alertNoKey: "Vui lòng nhập tên key!",
+            alertValidHours: "Vui lòng nhập số giờ hợp lệ!",
+            successCreate: "Tạo key thành công!",
+            successUpdate: "Cập nhật thời gian thành công!",
+            confirmDelete: "Bạn có chắc muốn xóa key này?",
+            errorLoad: "Lỗi kết nối nPoint!"
+        }
+    };
+
+    function toggleLanguage() {
+        currentLang = currentLang === "en" ? "vi" : "en";
+        updateAdminTexts();
+        renderTable();
+    }
+
+    function updateAdminTexts() {
+        let t = adminTexts[currentLang];
+        document.getElementById("mainHeading").innerText = t.heading;
+        document.getElementById("createTitle").innerText = t.createTitle;
+        document.getElementById("customKey").placeholder = t.placeholderKey;
+        document.getElementById("hoursValid").placeholder = t.placeholderHours;
+        document.getElementById("createBtn").innerText = t.createBtn;
+        document.getElementById("refreshBtn").innerText = t.refreshBtn;
+        document.getElementById("listTitle").innerText = t.listTitle + ` (${globalDevices.length})`;
+        document.getElementById("thKey").innerText = t.thKey;
+        document.getElementById("thStatus").innerText = t.thStatus;
+        document.getElementById("thTimer").innerText = t.thTimer;
+        document.getElementById("thAction").innerText = t.thAction;
+    }
 
     async function loadData() {
+        let t = adminTexts[currentLang];
         let tbody = document.getElementById("keyList");
-        tbody.innerHTML = `<tr><td colspan="4" style="text-align: center;">Đang tải dữ liệu...</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="4" style="text-align: center;">${t.loading}</td></tr>`;
         try {
             let res = await fetch(NPOINT_URL + "?t=" + Date.now());
             let data = await res.json();
@@ -69,16 +250,17 @@
             document.getElementById("totalKeys").innerText = globalDevices.length;
             renderTable();
         } catch (e) {
-            tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color:#ef4444;">Lỗi kết nối nPoint!</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color:#ef4444;">${t.errorLoad}</td></tr>`;
         }
     }
 
     function renderTable() {
+        let t = adminTexts[currentLang];
         let tbody = document.getElementById("keyList");
         tbody.innerHTML = "";
 
         if (globalDevices.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color:#94a3b8;">Không có key nào trên hệ thống.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color:#94a3b8;">${currentLang === "en" ? "No keys on the system." : "Không có key nào trên hệ thống."}</td></tr>`;
             return;
         }
 
@@ -86,10 +268,10 @@
         globalDevices.forEach((dev, index) => {
             let distance = dev.expireTimestamp - now;
             let timeStr = "";
-            let isExpired = distance <= 0;
+            let isExpired = distance <=0;
 
             if (isExpired) {
-                timeStr = "<span style='color:#ef4444;'>ĐÃ HẾT HẠN</span>";
+                timeStr = `<span style='color:#ef4444; font-weight:bold;'>${t.expiredText}</span>`;
             } else {
                 let h = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
                 let m = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
@@ -99,29 +281,29 @@
 
             let tr = document.createElement("tr");
             tr.innerHTML = `
-                <td style="font-family:monospace; color:#38bdf8; font-weight:bold;">${dev.key}</td>
-                <td><span class="badge-unused">Chưa sử dụng (Sẵn sàng)</span></td>
-                <td style="font-family:monospace; font-weight:bold; color:#f59e0b;" id="timer_${index}">${timeStr}</td>
+                <td style="font-family:'Orbitron',monospace; color:#38bdf8; font-weight:bold;">${dev.key}</td>
+                <td><span class="badge-unused">${t.statusUnused}</span></td>
+                <td style="font-family:'Orbitron',monospace; font-weight:bold; color:#f59e0b;" id="timer_${index}">${timeStr}</td>
                 <td class="actions">
-                    <input type="number" id="add_hours_${index}" placeholder="+ Giờ" style="width:60px; padding:4px;" value="24">
-                    <button class="btn-success" onclick="adjustTime(${index})">Cập nhật</button>
-                    <button class="btn-danger" onclick="deleteKey(${index})">Xóa</button>
+                    <input type="number" id="add_hours_${index}" placeholder="+h" style="width:55px; padding:6px;" value="24">
+                    <button class="btn-success" onclick="adjustTime(${index})">${t.updateBtn}</button>
+                    <button class="btn-danger" onclick="deleteKey(${index})">${t.deleteBtn}</button>
                 </td>
             `;
             tbody.appendChild(tr);
         });
     }
 
-    // Đồng hồ chạy real-time trên trang Admin
     setInterval(() => {
         if (globalDevices.length > 0) {
+            let t = adminTexts[currentLang];
             let now = Date.now();
             globalDevices.forEach((dev, index) => {
                 let timerEl = document.getElementById(`timer_${index}`);
                 if (timerEl) {
                     let distance = dev.expireTimestamp - now;
                     if (distance <= 0) {
-                        timerEl.innerHTML = "<span style='color:#ef4444;'>ĐÃ HẾT HẠN</span>";
+                        timerEl.innerHTML = `<span style='color:#ef4444; font-weight:bold;'>${t.expiredText}</span>`;
                     } else {
                         let h = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
                         let m = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
@@ -134,9 +316,10 @@
     }, 1000);
 
     async function createNewKey() {
+        let t = adminTexts[currentLang];
         let keyVal = document.getElementById("customKey").value.trim();
         let hours = parseFloat(document.getElementById("hoursValid").value) || 24;
-        if (!keyVal) { alert("Vui lòng nhập tên key!"); return; }
+        if (!keyVal) { alert(t.alertNoKey); return; }
 
         globalDevices.push({
             key: keyVal,
@@ -145,23 +328,25 @@
 
         await saveToServer();
         document.getElementById("customKey").value = "";
-        alert("Tạo key thành công!");
+        alert(t.successCreate);
     }
 
     async function adjustTime(index) {
+        let t = adminTexts[currentLang];
         let inputVal = document.getElementById(`add_hours_${index}`).value;
         let hoursToAdd = parseFloat(inputVal);
-        if (isNaN(hoursToAdd)) { alert("Vui lòng nhập số giờ hợp lệ!"); return; }
+        if (isNaN(hoursToAdd)) { alert(t.alertValidHours); return; }
 
         let baseTime = Math.max(globalDevices[index].expireTimestamp, Date.now());
         globalDevices[index].expireTimestamp = baseTime + (hoursToAdd * 60 * 60 * 1000);
 
         await saveToServer();
-        alert("Đã cập nhật thời gian thành công!");
+        alert(t.successUpdate);
     }
 
     async function deleteKey(index) {
-        if (!confirm("Bạn có chắc muốn xóa key này?")) return;
+        let t = adminTexts[currentLang];
+        if (!confirm(t.confirmDelete)) return;
         globalDevices.splice(index, 1);
         await saveToServer();
     }
@@ -175,7 +360,7 @@
             });
             loadData();
         } catch (e) {
-            alert("Lỗi lưu dữ liệu lên nPoint!");
+            alert(adminTexts[currentLang].errorLoad);
         }
     }
 
