@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>T-HUB | Admin Panel nPoint</title>
+    <title>T-HUB | Admin Panel</title>
     <style>
         body {
             background-color: #060913;
@@ -19,7 +19,7 @@
             background: rgba(17, 24, 39, 0.85);
             padding: 25px;
             border-radius: 20px;
-            width: 500px;
+            width: 520px;
             max-height: 90vh;
             overflow-y: auto;
             border: 1px solid rgba(56, 189, 248, 0.2);
@@ -56,13 +56,15 @@
         select { background: #1e293b; color: #38bdf8; border: 1px solid #334155; flex-grow: 1; }
         .btn-add { background: #10b981; color: white; }
         .btn-add:hover { background: #059669; }
+        .btn-delete { background: #ef4444; color: white; }
+        .btn-delete:hover { background: #dc2626; }
     </style>
 </head>
 <body>
 
     <div class="container">
         <h2>T-HUB Admin Panel</h2>
-        <div id="adminList">Đang tải dữ liệu từ nPoint...</div>
+        <div id="adminList">Đang tải dữ liệu từ hệ thống...</div>
     </div>
 
     <script>
@@ -115,6 +117,7 @@
                                     <option value="-24">-24 Giờ</option>
                                 </select>
                                 <button class="btn-add" onclick="modifyUserTime(${index})">Xác nhận</button>
+                                <button class="btn-delete" onclick="deleteUserHwid(${index})">Xóa mã máy</button>
                             </div>
                         </div>
                     `;
@@ -154,7 +157,35 @@
                 alert("Cập nhật thời gian thành công!");
                 loadAdminData();
             } catch (err) {
-                alert("Lỗi khi lưu dữ liệu lên nPoint!");
+                alert("Lỗi khi lưu dữ liệu!");
+            }
+        }
+
+        async function deleteUserHwid(index) {
+            isInteracting = false;
+            if (!confirm("Bạn có chắc chắn muốn xóa mã máy này? Thiết bị của người dùng sẽ bị xóa và tự động cấp mã máy mới!")) return;
+
+            try {
+                let res = await fetch(NPOINT_URL, { cache: "no-store" });
+                let data = await res.json();
+                let users = data.users;
+
+                // Đánh dấu cờ để thiết bị tự reset hoặc xóa trực tiếp khỏi mảng
+                users[index].forceReset = true;
+                
+                // Hoặc xóa hẳn khỏi danh sách
+                users.splice(index, 1);
+
+                await fetch(NPOINT_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(data)
+                });
+
+                alert("Đã xóa mã máy thành công!");
+                loadAdminData();
+            } catch (err) {
+                alert("Lỗi khi xóa mã máy!");
             }
         }
 
